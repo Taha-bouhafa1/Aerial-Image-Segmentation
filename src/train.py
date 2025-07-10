@@ -5,10 +5,10 @@ import torch.optim as optim
 from torch.utils.data import DataLoader, random_split
 from tqdm import trange
 import matplotlib.pyplot as plt
+from torchmetrics.classification import MulticlassJaccardIndex, MulticlassDice
 
 from src.data.potsdam_dataset import PotsdamDataset, get_transforms
 from src.models.unet3plus import UNet3Plus
-from src.utils.metrics import compute_iou, compute_dice
 
 BATCH_SIZE = 4
 EPOCHS = 50
@@ -38,9 +38,17 @@ optimizer = optim.Adam(model.parameters(), lr=LR)
 train_losses, train_ious, train_dices = [], [], []
 val_ious, val_dices = [], []
 
+train_iou_metric = MulticlassJaccardIndex(num_classes=NUM_CLASSES).to(DEVICE)
+train_dice_metric = MulticlassDice(num_classes=NUM_CLASSES).to(DEVICE)
+val_iou_metric = MulticlassJaccardIndex(num_classes=NUM_CLASSES).to(DEVICE)
+val_dice_metric = MulticlassDice(num_classes=NUM_CLASSES).to(DEVICE)
+
 def training(model, loader, criterion, optimizer):
     model.train()
-    total_loss, total_iou, total_dice = 0, 0, 0
+    total_loss = 0
+    train_iou_metric.reset()
+    train_dice_metric.reset()
+
     for images, masks in loader:
         images, masks = images.to(DEVICE), masks.to(DEVICE)
         optimizer.zero_grad()
@@ -49,22 +57,27 @@ def training(model, loader, criterion, optimizer):
         loss.backward()
         optimizer.step()
         total_loss += loss.item()
+
         preds = torch.argmax(outputs, dim=1)
-        total_iou += compute_iou(preds, masks, NUM_CLASSES)
-        total_dice += compute_dice(preds, masks, NUM_CLASSES)
-    return total_loss / len(loader), total_iou / len(loader), total_dice / len(loader)
+        train_iou_metric.update(preds, masks)
+        train_dice_metric.update(preds, masks)
+
+    return total_loss / len(loader), train_iou_metric.compute().item(), train_dice_metric.compute().item()
 
 def evaluate(model, loader):
     model.eval()
-    total_iou, total_dice = 0, 0
+    val_iou_metric.reset()
+    val_dice_metric.reset()
+
     with torch.no_grad():
         for images, masks in loader:
             images, masks = images.to(DEVICE), masks.to(DEVICE)
             outputs = model(images)
             preds = torch.argmax(outputs, dim=1)
-            total_iou += compute_iou(preds, masks, NUM_CLASSES)
-            total_dice += compute_dice(preds, masks, NUM_CLASSES)
-    return total_iou / len(loader), total_dice / len(loader)
+            val_iou_metric.update(preds, masks)
+            val_dice_metric.update(preds, masks)
+
+    return val_iou_metric.compute().item(), val_dice_metric.compute().item()
 
 for epoch in trange(EPOCHS, desc="Epochs"):
     train_loss, train_iou, train_dice = training(model, train_loader, criterion, optimizer)

@@ -70,6 +70,10 @@ class UNet3Plus(nn.Module):
         """ Bottleneck """
         e5=self.e5(p4)
 
+        """ DECODER 4 """
+
+        e1_d4=F.max_pool2d(e1,kernel_size=8,stride=8)
+        e1_d4=self.e1_d4(e1_d4)
 
 
 

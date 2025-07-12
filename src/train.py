@@ -52,17 +52,23 @@ def training(model, loader, criterion, optimizer):
     for images, masks in loader:
         images, masks = images.to(DEVICE), masks.to(DEVICE)
         optimizer.zero_grad()
+
         outputs = model(images)
-        loss = criterion(outputs, masks)
+        loss = 0
+        for out in outputs:
+            loss += criterion(out, masks)
+        loss = loss / len(outputs)
+
         loss.backward()
         optimizer.step()
         total_loss += loss.item()
 
-        preds = torch.argmax(outputs, dim=1)
+        preds = torch.argmax(outputs[0], dim=1)
         train_iou_metric.update(preds, masks)
         train_dice_metric.update(preds, masks)
 
     return total_loss / len(loader), train_iou_metric.compute().item(), train_dice_metric.compute().item()
+
 
 def evaluate(model, loader):
     model.eval()
@@ -73,7 +79,7 @@ def evaluate(model, loader):
         for images, masks in loader:
             images, masks = images.to(DEVICE), masks.to(DEVICE)
             outputs = model(images)
-            preds = torch.argmax(outputs, dim=1)
+            preds = torch.argmax(outputs[0], dim=1)  # only use y1
             val_iou_metric.update(preds, masks)
             val_dice_metric.update(preds, masks)
 

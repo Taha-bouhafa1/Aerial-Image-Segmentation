@@ -49,12 +49,6 @@ class UNet3Plus(nn.Module):
             conv_block(512,1024),
             conv_block(1024,1024),
         )
-        """ Classification """
-        self.cls = nn.Sequential(
-            nn.Dropout(0.5),
-            nn.Conv2d(1024, 2, kernel_size=1, padding=0),
-            nn.AdaptiveMaxPool2d((1))
-        )
         """ DECODER 4 """
         self.e1_d4=conv_block(64,64)
         self.e2_d4=conv_block(128,64)
@@ -110,10 +104,6 @@ class UNet3Plus(nn.Module):
         """ Bottleneck """
         e5=self.e5(p4)
 
-        """ Classification """
-        cls_logits = self.cls(e5)
-        cls_probs = F.softmax(cls_logits, dim=1)
-        cls_mask = cls_probs[:, 1].view(-1, 1, 1, 1)
 
         """ DECODER 4 """
 
@@ -194,22 +184,13 @@ class UNet3Plus(nn.Module):
         d1 = self.d1(d1)
 
         if self.deep_sup == True:
-            y1 = self.y1(d1) * cls_mask
-            y2 = F.interpolate(self.y2(d2), scale_factor=2, mode="bilinear", align_corners=True) * cls_mask
-            y3 = F.interpolate(self.y3(d3), scale_factor=4, mode="bilinear", align_corners=True) * cls_mask
-            y4 = F.interpolate(self.y4(d4), scale_factor=8, mode="bilinear", align_corners=True) * cls_mask
-            y5 = F.interpolate(self.y5(e5), scale_factor=16, mode="bilinear", align_corners=True) * cls_mask
+            y1 = self.y1(d1)
+            y2 = F.interpolate(self.y2(d2), scale_factor=2, mode="bilinear", align_corners=True)
+            y3 = F.interpolate(self.y3(d3), scale_factor=4, mode="bilinear", align_corners=True)
+            y4 = F.interpolate(self.y4(d4), scale_factor=8, mode="bilinear", align_corners=True)
+            y5 = F.interpolate(self.y5(e5), scale_factor=16, mode="bilinear", align_corners=True)
 
             return y1, y2, y3, y4, y5
-
-
-if __name__ == "__main__":
-    inputs=torch.rand((1,3,512,512))
-    model=UNet3Plus(num_classes=6,deep_sup=True)
-
-    y=model(inputs)
-
-    print(len(y))
 
 
 

@@ -33,8 +33,9 @@ class encoder_block(nn.Module):
 
 
 class UNet3Plus(nn.Module):
-    def __init__(self,num_classes=6):
+    def __init__(self,num_classes=6,deep_sup=True):
         super().__init__()
+        self.deep_sup=deep_sup
 
 
         """ ENCODER """
@@ -48,7 +49,12 @@ class UNet3Plus(nn.Module):
             conv_block(512,1024),
             conv_block(1024,1024),
         )
-
+        """ Classification """
+        self.cls = nn.Sequential(
+            nn.Dropout(0.5),
+            nn.Conv2d(1024, 2, kernel_size=1, padding=0),
+            nn.AdaptiveMaxPool2d((1))
+        )
         """ DECODER 4 """
         self.e1_d4=conv_block(64,64)
         self.e2_d4=conv_block(128,64)
@@ -62,7 +68,7 @@ class UNet3Plus(nn.Module):
         self.e1_d3 = conv_block(64, 64)
         self.e2_d3 = conv_block(128, 64)
         self.e3_d3 = conv_block(256, 64)
-        self.e4_d3 = conv_block(512, 64)
+        self.e4_d3 = conv_block(64, 64)
         self.e5_d3 = conv_block(1024, 64)
 
         self.d3=conv_block(64*5,64)
@@ -70,19 +76,29 @@ class UNet3Plus(nn.Module):
         """ DECODER 2 """
         self.e1_d2 = conv_block(64, 64)
         self.e2_d2 = conv_block(128, 64)
-        self.e3_d2 = conv_block(256, 64)
-        self.e4_d2 = conv_block(512, 64)
+        self.e3_d2 = conv_block(64, 64)
+        self.e4_d2 = conv_block(64, 64)
         self.e5_d2 = conv_block(1024, 64)
         self.d2 = conv_block(64 * 5, 64)
 
         """ DECODER 1 """
 
         self.e1_d1 = conv_block(64, 64)
-        self.e2_d1 = conv_block(128, 64)
-        self.e3_d1 = conv_block(256, 64)
-        self.e4_d1 = conv_block(512, 64)
+        self.e2_d1 = conv_block(64, 64)
+        self.e3_d1 = conv_block(64, 64)
+        self.e4_d1 = conv_block(64, 64)
         self.e5_d1 = conv_block(1024, 64)
         self.d1 = conv_block(64 * 5, 64)
+
+        """ Deep Supervision """
+        if deep_sup == True:
+            self.y1 = nn.Conv2d(64, num_classes, kernel_size=3, padding=1)
+            self.y2 = nn.Conv2d(64, num_classes, kernel_size=3, padding=1)
+            self.y3 = nn.Conv2d(64, num_classes, kernel_size=3, padding=1)
+            self.y4 = nn.Conv2d(64, num_classes, kernel_size=3, padding=1)
+            self.y5 = nn.Conv2d(1024, num_classes, kernel_size=3, padding=1)
+        else:
+            self.y1 = nn.Conv2d(64, num_classes, kernel_size=3, padding=1)
 
     def forward(self,inputs):
         """ Encoder """
@@ -93,6 +109,11 @@ class UNet3Plus(nn.Module):
 
         """ Bottleneck """
         e5=self.e5(p4)
+
+        """ Classification """
+        cls_logits = self.cls(e5)
+        cls_probs = F.softmax(cls_logits, dim=1)
+        cls_mask = cls_probs[:, 1].view(-1, 1, 1, 1)
 
         """ DECODER 4 """
 
@@ -172,14 +193,23 @@ class UNet3Plus(nn.Module):
         d1 = torch.cat([e1_d1, e2_d1, e3_d1, e4_d1, e5_d1], dim=1)
         d1 = self.d1(d1)
 
+        if self.deep_sup == True:
+            y1 = self.y1(d1) * cls_mask
+            y2 = F.interpolate(self.y2(d2), scale_factor=2, mode="bilinear", align_corners=True) * cls_mask
+            y3 = F.interpolate(self.y3(d3), scale_factor=4, mode="bilinear", align_corners=True) * cls_mask
+            y4 = F.interpolate(self.y4(d4), scale_factor=8, mode="bilinear", align_corners=True) * cls_mask
+            y5 = F.interpolate(self.y5(e5), scale_factor=16, mode="bilinear", align_corners=True) * cls_mask
+
+            return y1, y2, y3, y4, y5
+
 
 if __name__ == "__main__":
     inputs=torch.rand((1,3,512,512))
-    model=UNet3Plus(num_classes=6)
+    model=UNet3Plus(num_classes=6,deep_sup=True)
 
     y=model(inputs)
 
-    print(y.shape)
+    print(len(y))
 
 
 

@@ -19,7 +19,7 @@ class conv_block(nn.Module):
 
 
 class encoder_block(nn.Module):
-    def __init__(self,in_c,out_c):
+    def __init__(self,in_c,out_c,act=True):
         super().__init__()
         self.c1=nn.Sequential(
             conv_block(in_c,out_c,act=act),
@@ -59,8 +59,30 @@ class UNet3Plus(nn.Module):
         self.d4=conv_block(64*5,64)
 
         """ DECODER 3 """
-        self
+        self.e1_d3 = conv_block(64, 64)
+        self.e2_d3 = conv_block(128, 64)
+        self.e3_d3 = conv_block(256, 64)
+        self.e4_d3 = conv_block(512, 64)
+        self.e5_d3 = conv_block(1024, 64)
 
+        self.d3=conv_block(64*5,64)
+
+        """ DECODER 2 """
+        self.e1_d2 = conv_block(64, 64)
+        self.e2_d2 = conv_block(128, 64)
+        self.e3_d2 = conv_block(256, 64)
+        self.e4_d2 = conv_block(512, 64)
+        self.e5_d2 = conv_block(1024, 64)
+        self.d2 = conv_block(64 * 5, 64)
+
+        """ DECODER 1 """
+
+        self.e1_d1 = conv_block(64, 64)
+        self.e2_d1 = conv_block(128, 64)
+        self.e3_d1 = conv_block(256, 64)
+        self.e4_d1 = conv_block(512, 64)
+        self.e5_d1 = conv_block(1024, 64)
+        self.d1 = conv_block(64 * 5, 64)
 
     def forward(self,inputs):
         """ Encoder """
@@ -91,6 +113,73 @@ class UNet3Plus(nn.Module):
         d4=torch.cat([e1_d4,e2_d4,e3_d4,e4_d4,e5_d4],dim=1)
         d4=self.d4(d4)
 
+        """ DECODER 3 """
+
+        e1_d3 = F.max_pool2d(e1, 4, 4)
+        e1_d3 = self.e1_d3(e1_d3)
+
+        e2_d3 = F.max_pool2d(e2, 2, 2)
+        e2_d3 = self.e2_d3(e2_d3)
+
+        e3_d3 = self.e3_d3(e3)
+
+        e4_d3 = F.interpolate(d4, scale_factor=2, mode="bilinear", align_corners=True)
+        e4_d3 = self.e4_d3(e4_d3)
+
+        e5_d3 = F.interpolate(e5, scale_factor=4, mode="bilinear", align_corners=True)
+        e5_d3 = self.e5_d3(e5_d3)
+
+        d3 = torch.cat([e1_d3, e2_d3, e3_d3, e4_d3, e5_d3], dim=1)
+        d3 = self.d3(d3)
+
+
+        """ DECODER 2 """
+
+        # Decoder 2
+        e1_d2 = F.max_pool2d(e1, 2, 2)
+        e1_d2 = self.e1_d2(e1_d2)
+
+        e2_d2 = self.e2_d2(e2)
+
+        e3_d2 = F.interpolate(d3, scale_factor=2, mode="bilinear", align_corners=True)
+        e3_d2 = self.e3_d2(e3_d2)
+
+        e4_d2 = F.interpolate(d4, scale_factor=4, mode="bilinear", align_corners=True)
+        e4_d2 = self.e4_d2(e4_d2)
+
+        e5_d2 = F.interpolate(e5, scale_factor=8, mode="bilinear", align_corners=True)
+        e5_d2 = self.e5_d2(e5_d2)
+
+        d2 = torch.cat([e1_d2, e2_d2, e3_d2, e4_d2, e5_d2], dim=1)
+        d2 = self.d2(d2)
+
+        """ DECODER 1 """
+        # Decoder 1
+        e1_d1 = self.e1_d1(e1)
+
+        e2_d1 = F.interpolate(d2, scale_factor=2, mode="bilinear", align_corners=True)
+        e2_d1 = self.e2_d1(e2_d1)
+
+        e3_d1 = F.interpolate(d3, scale_factor=4, mode="bilinear", align_corners=True)
+        e3_d1 = self.e3_d1(e3_d1)
+
+        e4_d1 = F.interpolate(d4, scale_factor=8, mode="bilinear", align_corners=True)
+        e4_d1 = self.e4_d1(e4_d1)
+
+        e5_d1 = F.interpolate(e5, scale_factor=16, mode="bilinear", align_corners=True)
+        e5_d1 = self.e5_d1(e5_d1)
+
+        d1 = torch.cat([e1_d1, e2_d1, e3_d1, e4_d1, e5_d1], dim=1)
+        d1 = self.d1(d1)
+
+
+if __name__ == "__main__":
+    inputs=torch.rand((1,3,512,512))
+    model=UNet3Plus(num_classes=6)
+
+    y=model(inputs)
+
+    print(y.shape)
 
 
 

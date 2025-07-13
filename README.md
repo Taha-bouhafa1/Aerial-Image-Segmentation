@@ -28,11 +28,12 @@ This project implements semantic segmentation using the U-Net3+ architecture wit
 ### Example Samples
 
 Each sample below includes the original image on the left and its corresponding ground truth mask on the right:
-
-| Sample | Sample |
-|--------|--------|
-| ![Image1](https://github.com/Taha-bouhafa1/Aerial-Image-Segmentation/blob/main/assets/image1.jpg) | ![Image2](https://github.com/Taha-bouhafa1/Aerial-Image-Segmentation/blob/main/assets/image2.jpg) |
-| ![Image3](https://github.com/Taha-bouhafa1/Aerial-Image-Segmentation/blob/main/assets/image3.jpg) | — |
+ 
+ ![Image1](https://github.com/Taha-bouhafa1/Aerial-Image-Segmentation/blob/main/assets/image1.jpg)  
+ 
+ ![Image2](https://github.com/Taha-bouhafa1/Aerial-Image-Segmentation/blob/main/assets/image2.jpg) 
+ 
+![Image3](https://github.com/Taha-bouhafa1/Aerial-Image-Segmentation/blob/main/assets/image3.jpg) 
 
 ---
 

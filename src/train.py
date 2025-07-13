@@ -5,8 +5,8 @@ import torch.optim as optim
 from torch.utils.data import DataLoader, random_split
 from tqdm import trange
 import matplotlib.pyplot as plt
-from torchmetrics.classification import MulticlassJaccardIndex, MulticlassDice
-
+from torchmetrics.classification import MulticlassJaccardIndex
+from torchmetrics.segmentation import DiceScore
 from src.data.potsdam_dataset import PotsdamDataset, get_transforms
 from src.models.unet3plus import UNet3Plus
 
@@ -39,9 +39,9 @@ train_losses, train_ious, train_dices = [], [], []
 val_ious, val_dices = [], []
 
 train_iou_metric = MulticlassJaccardIndex(num_classes=NUM_CLASSES).to(DEVICE)
-train_dice_metric = MulticlassDice(num_classes=NUM_CLASSES).to(DEVICE)
+train_dice_metric = DiceScore(num_classes=NUM_CLASSES).to(DEVICE)
 val_iou_metric = MulticlassJaccardIndex(num_classes=NUM_CLASSES).to(DEVICE)
-val_dice_metric = MulticlassDice(num_classes=NUM_CLASSES).to(DEVICE)
+val_dice_metric = DiceScore(num_classes=NUM_CLASSES).to(DEVICE)
 
 def training(model, loader, criterion, optimizer):
     model.train()

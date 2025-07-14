@@ -42,7 +42,7 @@ This project uses **U-Net3+**, a powerful segmentation model that enhances the c
 
 ---
 
-### 🔍 Deep Supervision (Optional)
+### 🔍 Deep Supervision 
 
 We also implement **deep supervision**, where auxiliary outputs are generated from intermediate decoder stages and supervised during training. This leads to better convergence and regularization.
 

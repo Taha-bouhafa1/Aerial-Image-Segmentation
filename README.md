@@ -1,4 +1,5 @@
-# Semantic Segmentation with U-Net3+ on Potsdam Dataset
+# U-Net3+ with Deep Supervision for Semantic Segmentation of Aerial Images (Potsdam)
+
 
 ## Project Overview
 

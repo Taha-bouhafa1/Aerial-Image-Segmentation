@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-This project implements semantic segmentation using the U-Net3+ architecture with optional deep supervision on the Potsdam dataset. The goal is to classify each pixel in high-resolution aerial RGB images into one of several land cover classes.
+This project implements semantic segmentation using the **U-Net3+ architecture** with optional **deep supervision** on the **ISPRS Potsdam** dataset. The goal is to classify each pixel in high-resolution aerial RGB images into one of several land cover classes.
 
 ![Potsdam Overview](https://github.com/Taha-bouhafa1/Aerial-Image-Segmentation/blob/main/assets/potsdam.png)
 
@@ -11,8 +11,9 @@ This project implements semantic segmentation using the U-Net3+ architecture wit
 ## Dataset
 
 - **Source**: [2D Semantic Labeling Contest – Potsdam](https://www.isprs.org/education/benchmarks/UrbanSemLab/2d-sem-label-potsdam.aspx)
-- The Potsdam dataset consists of very high-resolution aerial RGB images (6000×6000) and corresponding labeled masks.
-- The dataset includes the following classes:
+- The Potsdam dataset contains ultra high-resolution aerial RGB images (6000×6000) and their pixel-wise semantic segmentation masks.
+- Images were tiled into **256x256** or **512x512** patches depending on the training configuration.
+- The label masks contain the following classes:
 
 | Class               | RGB Value         |
 |---------------------|-------------------|
@@ -23,35 +24,93 @@ This project implements semantic segmentation using the U-Net3+ architecture wit
 | Car                 | (255, 255, 0)     |
 | Clutter/background  | (255, 0, 0)       |
 
-- Images and masks were tiled into patches of size **512x512** (or 256x256 based on config) for training.
-
 ### Example Samples
 
-Each sample below includes the original image on the left and its corresponding ground truth mask on the right:
- 
- ![Image1](https://github.com/Taha-bouhafa1/Aerial-Image-Segmentation/blob/main/assets/image1.jpg)  
- 
- ![Image2](https://github.com/Taha-bouhafa1/Aerial-Image-Segmentation/blob/main/assets/image2.jpg) 
- 
-![Image3](https://github.com/Taha-bouhafa1/Aerial-Image-Segmentation/blob/main/assets/image3.jpg) 
+Each sample below shows the original image (left) and its corresponding ground truth mask (right):
+
+![Image1](https://github.com/Taha-bouhafa1/Aerial-Image-Segmentation/blob/main/assets/image1.jpg)  
+![Image2](https://github.com/Taha-bouhafa1/Aerial-Image-Segmentation/blob/main/assets/image2.jpg)  
+![Image3](https://github.com/Taha-bouhafa1/Aerial-Image-Segmentation/blob/main/assets/image3.jpg)  
 
 ---
 
-## Repository Structure
+## U-Net3+ Architecture
 
-- `data/raw/` – Original dataset images and masks  
-- `data/processed/images/` – Processed and tiled image patches  
-- `data/processed/masks_converted/` – Corresponding class index masks  
-- `src/data/potsdam_dataset.py` – Custom PyTorch `Dataset` class and image transformations  
-- `src/models/unet3plus.py` – U-Net3+ model implementation with deep supervision  
-- `src/train.py` – Training loop  
-- `scripts/tile_images.py` – Script to tile large images  
-- `scripts/label_converter.py` – Script to convert RGB masks to class indices  
+This project uses **U-Net3+**, a powerful segmentation model that enhances the classic U-Net by introducing full-scale skip connections across different levels of the encoder and decoder. This helps the network better preserve fine-grained spatial details.
+
+![U-Net3+ Architecture](https://github.com/Taha-bouhafa1/Aerial-Image-Segmentation/blob/main/assets/unet3%2B.png)
+
+---
+
+### 🔍 Deep Supervision (Optional)
+
+We also implement **deep supervision**, where auxiliary outputs are generated from intermediate decoder stages and supervised during training. This leads to better convergence and regularization.
+
+![Deep Supervision](https://github.com/Taha-bouhafa1/Aerial-Image-Segmentation/blob/main/assets/Deep%20Supervision.png)
+
+You can enable/disable deep supervision easily in the code.
+
+---
+
+## 📁 Project Structure
+
+```bash
+Aerial-Image-Segmentation/
+│
+├── README.md
+├── assets/ # Images used in README (architecture, examples)
+├── data/
+│ ├── raw/ # Original Potsdam images and masks
+│ └── processed/
+│ ├── images/ # Tiled image patches (512x512)
+│ ├── masks/ # Tiled RGB masks
+│ └── masks_converted/ # Class-indexed masks
+│
+├── outputs/ # Logs, predictions, saved checkpoints
+├── training.ipynb # Jupyter notebook (optional exploration)
+│
+└── src/
+├── data/
+│ ├── potsdam_dataset.py # Custom PyTorch Dataset class
+│ ├── tile_images.py # Script to tile large 6000x6000 images
+│ └── label_converter.py # Script to convert RGB masks to class indices
+│
+├── model/
+│ └── unet3plus.py # U-Net3+ model with deep supervision support
+│
+├── train.py # Main training script
+└── utils.py # Utility functions (metrics, visualization, etc.)
+
+```
+
 
 ---
 
 ## Setup
 
-1. Install required packages:
+1. Install dependencies:
    ```bash
    pip install -r requirements.txt
+2. Prepare the dataset:
+
+   Place raw images and masks in data/raw/images and data/raw/masks
+
+   Run tiling and mask conversion:
+   
+```bash
+python src/data/tile_images.py
+python src/data/label_converter.py
+```
+---
+
+##  How to Train
+
+You can train the model by running the following command:
+
+```bash
+python src/train.py
+```
+
+---
+## Author
+Taha Bouhafa

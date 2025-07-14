@@ -108,8 +108,14 @@ python src/data/label_converter.py
 You can train the model by running the following command:
 
 ```bash
-python src/train.py
+!python src/train.py
 ```
+---
+
+##  Reference
+
+Refer to the official paper for more technical details:  
+[**UNet 3+: A Full-Scale Connected UNet for Medical Image Segmentation**](https://arxiv.org/pdf/2004.08790)  
 
 ---
 ## Author

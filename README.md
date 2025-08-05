@@ -119,5 +119,13 @@ Refer to the official paper for more technical details:
 [**UNet 3+: A Full-Scale Connected UNet for Medical Image Segmentation**](https://arxiv.org/pdf/2004.08790)  
 
 ---
-## Author
-Taha Bouhafa
+## Citation
+```bash
+@misc{bouhafa2025unet3plus,
+  author       = {Taha Bouhafa},
+  title        = {U-Net3+ with Deep Supervision for Semantic Segmentation of Aerial Images (Potsdam)},
+  year         = {2025},
+  howpublished = {\url{https://github.com/Taha-bouhafa1/Aerial-Image-Segmentation}},
+  note         = {GitHub repository}
+}
+```
